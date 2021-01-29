@@ -1,0 +1,392 @@
+# This first project was written in Python(Jupyter Notebook) on October 2020.
+
+Profitability of Andriod and iOS Apps on the Market.
+
+At our company, we only build apps that are free to download and install, and our main source of revenue consists of in-app ads. This means that our revenue for any given app is mostly influenced by the number of users that use our app. Our goal for this project is to analyze data to help our developers understand what kinds of apps are likely to attract more users.
+
+Simplify the process of looking at Millions of apps that are on the App stores both on the iOS side and the Android side.
+
+from csv import reader
+​
+#opening the android data file
+open_file = open('googleplaystore.csv')
+read_file = reader(open_file)
+android = list(read_file)
+​
+android_header = android[0]
+android = android[1:]
+​
+#opening iOS data file
+open_file = open('AppleStore.csv')
+read_file = reader(open_file)
+iOS = list(read_file)
+​
+iOS_header = iOS[0]
+iOS = iOS[1:]
+​
+#These steps will completely open the two files
+def explore_data(dataset,start, end, rows_and_columns = False):
+    dataset_slice = dataset[start:end]
+    for row in dataset_slice:
+        print(row)
+        print('\n')
+        #the second print statement will add an additional line after each iteration
+        
+    if rows_and_columns:
+        print('Number of rows:', len(dataset))
+        print('Number of columns:', len(dataset[0]))
+        # These print the number of rows and columns in the data set, 
+        # The number of columns is determined by the number of headers in the data set
+        # The number of rows is just the determined by the length of the data set excluding the header
+            
+print(android_header)
+print('\n')
+explore_data(android,0,3,True)
+print(android[10472])
+print('\n')
+print(android_header)
+print('\n')
+print(android[0])
+print('\n')
+​
+# I am comparing the problematic entry to the base case which has all correct imputs
+# This will identify that there is indeed an error in the database
+# We can delete the entry that has a mistake in this case.
+# print(len(android))
+del android[10472]
+# print(len(android))
+​
+# I have commented out the two lines of code for testing purposes
+# The del function ensures that we are clearing the data that are not usable.
+for app in android:
+    name = app[0]
+    if name == 'Instagram':
+        print(app)
+duplicate_apps = []
+unique_apps = []
+# We create two lists to store the names of both the unique apps and duplicate apps
+​
+for app in android: # we loop through the data
+    name = app[0] # store the names of the apps which is the first category
+    if name in unique_apps: # if the name is already in unique names, then we append to duplicate apps
+        duplicate_apps.append(name)
+    else:
+        unique_apps.append(name) # If the name has not shown up before we append to unique names
+        
+print('Number of duplicate apps:', len(duplicate_apps))
+print('\n')
+print('Examples of duplicate apps:', duplicate_apps[:15])
+The Criteria to removing duplicate entries is looking at the number the reviews that the app received, the higher the number, the more recent the data will be. Therefore, we can delete all lower review entries from the list.
+
+reviews_max = {}
+for apps in android: # we are looping through the data
+    name = apps[0] # storing all the names in the file to the variable name
+    n_reviews = float(apps[3]) # The number of reviews is stored at index 3, we convert all the numbers present into floats
+    
+    if name in reviews_max and reviews_max[name] < n_reviews:
+    # if name is already in the dictionary and the new reviews yield a higher number, replace the value in the dictionary
+        reviews_max[name] = n_reviews
+    
+    
+    elif name not in reviews_max:
+    # else if name is not in the dictionary, add the key value pair into the dictionary
+        reviews_max[name] = n_reviews
+        
+​
+        
+    
+#print("Expected Length is:", len(android) - 1181)
+#print("Actual length is:" , len(reviews_max))
+​
+#I am just checking to see if the process returned the correct number of apps that are not duplicates
+android_clean = []
+already_added = []
+​
+# creating two fresh lists to store clean data and app names
+​
+for apps in android: # Loop through the data
+    name = apps[0] # store all names in name
+    n_reviews = float(apps[3]) # store all number of reviews in n_reviews
+    
+    if (reviews_max[name] == n_reviews) and (name not in already_added):
+    # if n_reviews yield the same number of maximum reviews of the app name
+    # also the name of the app is not already in already_added
+        android_clean.append(apps) # append the role to clean data set
+        already_added.append(name) # append the name of the data, so that we can keep track of the apps that are clean
+        
+explore_data(android_clean,0,3,True)
+#print(iOS[813][1])
+#print(iOS[6731][1])
+#print('\n')
+#print(android_clean[4412][0])
+#print(android_clean[7940][0])
+​
+def is_english(string):
+    for character in string:
+        if ord(character) > 127:
+            return False
+    return True
+​
+#General Logic of the function is to make sure all the code are in the English Language.
+#We are more interested in reviewing the english app users and their tendencies.
+​
+#print(is_english('Instagram'))
+​
+#Tests that functions knows that we are looking for only english related apps.
+#print(is_english('爱奇艺PPS -《欢乐颂2》电视剧热播'))
+# Testing if the function does what it intends to do
+#print(is_english('Docs To Go™ Free Office Suite'))
+#print(is_english('Instachat 😜'))
+​
+#They seem to be english names, but why are they not included?
+# I want to run a test to check for upperscript characters and emojis to see if that is the reason.
+​
+#print(ord('™'))
+#print(ord('😜'))
+​
+#It seems that they returned a result higher than 127, that is why the result is false.
+​
+#Let us rewrite the same function, but this time we include some special characters to exist.
+# This will ensure, we do not eliminate data that should be included due to the inclusion of emoji's or other special characters.
+​
+def is_english(string):
+    non_ascii = 0
+    for character in string:
+        if ord(character) > 127:
+            non_ascii += 1
+    
+    if non_ascii > 3:
+        return False
+    else:
+        return True
+#print(is_english('😜'))
+#print(is_english('Docs To Go™ Free Office Suite'))
+#print(is_english('爱奇艺PPS -《欢乐颂2》电视剧热播'))
+​
+#All the tests seems to work properly! 
+#We are now accepting app names with special characters.
+# We need to store all english apps in into an empty list.
+#This will make sure that we can only manipulate the information that we want.
+​
+Android_english = []
+iOS_english = []
+​
+#Making sure we are storing all data in their respective lists.
+​
+for app in android_clean:
+    name = app[0]
+    if is_english(name):
+        Android_english.append(app)
+        
+# This will store all Android english app names into the new list
+​
+for app in iOS:
+    name = app[1]
+    if is_english(name):
+        iOS_english.append(app)
+​
+# This will store all iOS english app names into the new list created.
+​
+​
+# Let us test the sequence out.
+​
+explore_data(iOS_english,0,3,True)
+print('\n')
+explore_data(Android_english,0,3,True)
+#Now we need to Isolate for Free-Apps.
+#We need to store free apps into both an iOS list and an Android List
+iOS_free = []
+android_free = []
+​
+​
+for apps in iOS_english:
+    price = apps[4]
+    if price == '0.0':
+        iOS_free.append(apps)
+        
+for apps in Android_english:
+    price = apps[7]
+    if price == '0':
+        android_free.append(apps)
+        
+#For both iOS and Android, we are looking at only including free apps into the new cleaned list
+​
+#Special note, please pay attention to the price location for both iOS and Android are stored in different range values.
+​
+# We should check if the number has decreased.
+​
+#print(len(iOS_free))
+#print(len(android_free))
+​
+#We are reasonably sure that all of the Paid apps are removed now.
+​
+#We can compare the previous screen to this one, and there is a major difference.
+​
+explore_data(android_free,0,3,True)
+explore_data(iOS_free,0,3,True)
+​
+​
+As I mentioned a little earlier in the process, our aim is to determine the kindsd of apps that are likely to attact more users. The reasoning behind this is that our revenue is highly influenced by number of people using the apps. (Ad Revenue)
+
+Therefore to minimize risks, our strategy should be implement the following strategies.
+
+Build a minimal android version of the app, as a trial run.
+
+If the app gains traction and good responses, we can further develop it.
+
+If the app becomes profitable after a few months, we can look to import the app onto the Apple App Store.
+
+I believe at the end of the day, the more customers that we can bring in, the more successful the app will be, having android as a starting place to test is a great place to capture initial value. As we push forward and gather that additional traction, we can then transfer to iOS.
+
+# Let us construct a frequency table to see which genre is the most popular!
+# We should rank based on descending order, the issue is...
+# We know that Dictionaries have no order!
+# The way we can combat this reality is storing the data into temporary tuple data structures.
+​
+#First lets construct a frequency table
+​
+def freq_table(dataset, index):
+    tables = {}
+    total = 0
+    
+    for row in dataset:
+        total += 1
+        value = row[index]
+        if value in tables:
+            tables[value] += 1
+        else:
+            tables[value] = 1
+        
+        # Up to this point, we are look through the entire dataset, and the program is constructing a histogram
+​
+    table_percentage = {}
+    
+    # Given the histogram, we are going to turn the data into percentages.
+    # We are going to store the data into a blank dictionary.
+    
+    for key in tables:
+        percentage = (tables[key] / total) * 100
+        table_percentage[key] = percentage
+    
+    return table_percentage
+        # We are going to return the percentage.
+    #Next step is to sort the data in descending order.
+​
+​
+            
+def display_table(dataset, index):
+    table = freq_table(dataset, index)
+    table_display = []
+    for key in table:
+        key_val_as_tuple = (table[key], key)
+        table_display.append(key_val_as_tuple)
+        # we are taking the percentages dictionary constructed in the previous section.
+        # Making a tuple, and appending it to an empty list we can table_display
+        
+    table_sorted = sorted(table_display, reverse = True)
+    for entry in table_sorted:
+        print(entry[1], ':', entry[0])
+        
+        
+        # This will print out the entries of the frequency table in descending order
+# Let us test on the Categories of prime_genre, Genres, and Category!
+display_table(iOS_free, -5)
+# We know now based on percentage usage, which has genre is most popular in term of genre
+display_table(android_free, 1) # we are now looking at the Category section on Android.
+# Now let us examine the Genre Section on Android.
+​
+display_table(android_free, -4)
+It feels to me so far that iOS is definitely dominated with games, and Android is more well-rounded in app selection. It seems that there are definitely more genre types for Android with the data given, and we cannot make conclusion between the Category and Genres just based on the percentage data alone.
+
+# Let first find the most popular genre on iOS! 
+​
+genres_iOS = freq_table(iOS_free, -5)
+​
+# we are inputting all genres into the variable genres_iOS
+​
+for genre in genres_iOS:
+    total_n = 0
+    len_genre = 0 # we are evaluating len here, because we do not know the number of installs.
+    # we can only estimate based on number of ratings
+    for app in iOS_free:
+        # We can now looping through the dataset
+        genre_app = app[-5] # we are storing the genre into the variable
+        if genre_app == genre:
+            n_rating = float(app[5]) 
+            total_n += n_rating
+            len_genre += 1
+            # If genre_app exists within genre_iOS update value to the total number of ratings.
+            # add one to the total number of genres that exists.
+    avg_tot_rating = total_n / len_genre
+    #computing the avergae
+    
+    print(genre, ":", avg_tot_rating)
+    
+Let me do a deeper dive within the iOS platform, and check for the three options that most are aware, that is very popular. 1) Navigation, Social Media, and Music. Then perhaps, we can look at Finance, and Reference to see if we can carve out a niche.
+
+for apps in iOS_free:
+    if apps[-5] == 'Navigation':
+        print(apps[1], ':', apps[5])
+        # it seems that the top players of Waze and Google Maps are dominating the space
+        
+for apps in iOS_free:
+    if apps[-5] == 'Social Networking':
+        print(apps[1], ':', apps[5])
+        # We can see there is very much the same problem that exists
+for apps in iOS_free:
+    if apps[-5] == "Music":
+        print(apps[1], ":", apps[5])
+        # It will be extremely hard to knock off the tried and tested.
+for apps in iOS_free:
+    if apps[-5] == "Finance":
+        print(apps[1], ":", apps[5])
+​
+print('\n')
+​
+for apps in iOS_free:
+    if apps[-5] == "Reference":
+        print(apps[1], ":", apps[5])
+        
+# I believe the most promise is likely to lie within the reference section.
+# If we can put out a free resources that can help people for instance learn to code.
+# That may be a good avenue to get traction and ad revenue.
+​
+# Perhaps, we can also do online banking for sure.
+# We will need to be really different and have great features to gain traction.
+# It is possible, but we will need to really differentiate ourselves to make it work.
+display_table(android_free, 5)
+​
+# The first issue that I can spot is the data is not very percise.
+# 1,000,000+ installs is too large of a range, and can techniquely go on to infinity, if there are infinite amount of people.
+# Although, not the case, but you can get my point.
+Perhaps, we can add back a little certainity if we remove the + behind each number, although, we may be understating the data, it is better than the ambiguity of interpreting what the + means in this context. We should also remove the ',' also, because it will no doubt give python a lot of issues when dealing with integers.
+# We will be taking similar steps in the previous iOS example.
+​
+categories_android = freq_table(android_free, 1)
+​
+for category in categories_android:
+    total_n = 0
+    len_category = 0
+    for apps in android_free:
+        category_app = apps[1]
+        if category_app == category:
+            n_installs = apps[5]
+            n_installs = n_installs.replace('+', '')
+            n_installs = n_installs.replace(',', '')
+            # In this case we are storing the number of installs into the variable n_installs
+            # Removing the comma and also the plus sign in the process because python does not know how to deal with , and + when converting to float or int.
+            total_n += float(n_installs)
+            len_category += 1
+    avg_n_installs = total_n / len_category
+    
+    print(category, ":", avg_n_installs)
+    
+            
+for apps in android_free:
+    if apps[1] == "BOOKS_AND_REFERENCE":
+        print(apps[0], ":", apps[5])
+    
+for apps in android_free:
+    if apps[1] == "PARENTING":
+        print(apps[0], ":", apps[5])
+On the Android End, I might choose to place my app in the parenting space. I believe, there could be some very good parenting guides that may gain a lot traction. The amount of people visiting that area is large, but there is not very much competition in the space. If the company produces a SaaS that helps attend to issues of parenting, it may be successful.

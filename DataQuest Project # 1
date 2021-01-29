@@ -381,7 +381,10 @@ for category in categories_android:
     
     print(category, ":", avg_n_installs)
     
-            
+# Now I want to flip through some categories of interest to find opportunities. After looking at the results, I see that there is most likely an opportunity to crave out a niche for the app in Books and References, and also Parenting.
+
+# Those are the two that I will take a deeper dive into.
+
 for apps in android_free:
     if apps[1] == "BOOKS_AND_REFERENCE":
         print(apps[0], ":", apps[5])

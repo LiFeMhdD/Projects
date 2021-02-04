@@ -1,0 +1,229 @@
+Guided Projects: Exploring Hacker News Posts
+
+Throughout this course we looked at how strings worked in detail, how date and time works, and Object-oriented programming. This project will seek to tie up all these themes together.
+
+Hacker News is a site started by the startup incubator Y Combinator, where users submitted stories are voted and commented upon. This works like Reddit. Ultimately, we will be answering two main questions.
+
+1) Do Ask HN or Show HN receive more comments on average?
+2) Do posts created at a certain time receive more comments on average?
+
+In other words, does a post that show up at a certain time of day gain more traction than others posts, and which type of posts is more popular by the users of the site.
+
+
+Ended on February 2021
+Guided Projects: Exploring Hacker News Posts
+​
+Throughout this course we looked at how strings worked in detail, how date and time works, and Object-oriented programming. This project will seek to tie up all these themes together.
+​
+Hacker News is a site started by the startup incubator Y Combinator, where users submitted stories are voted and commented upon. This works like Reddit. Ultimately, we will be answering two main questions.
+​
+1) Do Ask HN or Show HN receive more comments on average?
+2) Do posts created at a certain time receive more comments on average?
+​
+In other words, does a post that show up at a certain time of day gain more traction than others posts, and which type of posts is more popular by the users of the site.
+​
+​
+Ended on February 2021
+
+from csv import reader
+​
+#read the file hacker news
+​
+file = open("hacker_news.csv")
+​
+hackernews = list(reader(file))
+# Create a list of list, which includes the data gathered from hacker_news.csv
+hackernews[:5]
+# After storing the Data into the HN Variable, we Look at the first five rows of the document.
+# This will showcase, if we need to remove something from the list or not.
+headers = hackernews[0]
+# This ensures that we store all the headers in the header variable, so that...
+hackernews = hackernews[1:]
+# We can remove the header from the data set in the hn = hn[1:] step
+# Now we print the first five roles, to make sure that the headers is no longer part of the dataset.
+print(headers)
+print(hackernews[:5])
+ews
+# We will be creating three empty lists called ask posts, show posts and other posts.
+# This will signify, which category the posts are coming from.
+​
+ask_posts = []
+show_posts = []
+other_posts = []
+​
+# We now have to loop through the data of the Hacker News set and find all items in the title column.
+for row in hackernews:
+    #Now we can assign all the title of the post which is located in row 2[1].
+    title = row[1]
+    # now we find if the title begins with ask or show or neither, and append those values to their respective lists.
+    if title.lower().startswith("ask hn"):
+        ask_posts.append(row)
+​
+    elif title.lower().startswith("show hn"):
+        show_posts.append(row)
+        
+    else:
+        other_posts.append(row)
+        
+#Let us check our results and see the number of post in each category
+print(len(ask_posts))
+print(len(show_posts))
+print(len(other_posts))
+8417431192661
+# Now we are interested in starting to answer the first question.
+​
+#Which is... Do Ask HN or Show HN on average receive more comments.
+​
+#Initially there are no comments, because we have not iterate through the data yet.
+​
+total_ask_comments = 0
+# Now lets loop through the data.
+​
+for post in ask_posts:
+    # We then convert the number of comments into an integer through the int function.
+    # The num_comments is located on the fifth row, which is index 4.
+    # We then add the number to the total of number of ask comments.
+    total_ask_comments += int(post[4])
+​
+avg_ask_comments = total_ask_comments / len(ask_posts)
+​
+# Find the average number of people who commented on Ask HN
+​
+print(avg_ask_comments)
+​
+# The average is 14.038417431192661
+​
+# The average is 10.31669535283993
+# Now we do the same process for the show comments. The code and logic will be the same.
+# I will skip the commenting for this section
+​
+total_show_comments = 0
+​
+for post in show_posts:
+    
+    total_show_comments += int(post[4])
+    
+avg_show_comments = total_show_comments / len(show_posts)
+​
+print(avg_show_comments)
+​
+# The average is 10.31669535283993
+When we look at both the averages, it is very easy to see that on average there is more people posting in the Ask HN category then the Show HN category. This presents information to suggests that more people are interested to ask the community a question about something.
+
+For the next section of the project we look at the second question in more detail, we will seek to find out if the time of the day has any influence of posting.
+
+# In order to account for the case that ask posts made at a certain time of day,
+# will attract more posts, we need to find out the following:
+# 1. Calculate the amount of ask post created in each hour of the day with respective comments.
+# 2. Calculate the average number of comments ask posts received by hour.
+​
+import datetime as dt
+​
+# Create an empty list to store the information of the date/time and posts
+​
+result_list = []
+​
+for post in ask_posts:
+    result_list.append([post[6], int(post[4])])
+    
+    #append the results from ask_posts into the new list called result_list
+    
+#print(result_list) # I was just testing out my output in this case.
+    
+    # with the data, we can now create two seperate dictionaries for hour and comments
+counts_by_hour ={}
+​
+comments_by_hour = {}
+​
+# The next line will be the method we will use to parse through all the data related to datetime
+​
+method = "%m/%d/%Y %H:%M"
+​
+# we now go through all the data that we stored into result_list.
+# For the values in the first index, we store it in date.
+# For the values located in index 2 we store in comments.
+# I know this because previous to this, I printed out the result_list variable.
+​
+for row in result_list:
+    date = row[0]
+    comment = row[1]
+    time = dt.datetime.strptime(date,method).strftime("%H")
+    # for the time variable, I took all the data in date, and parsed it through the method
+    # also used strftime to select the hour data so that we can actually create a histrogram of comments with the hourly data.
+    
+    if time not in counts_by_hour:
+        counts_by_hour[time] = 1
+        comments_by_hour[time] = comment
+        
+        # If the key is not present, we set the value equal to zero, and set the comments by hour to equal comments.
+        # If the key is present, we increment by 1 the hour, and then increment by the comment number
+    else:
+        counts_by_hour[time] += 1
+        comments_by_hour[time] += comment
+    
+#comments_by_hour # I am printing comments_by_hour to see if the code is working properly or not.
+#counts_by_hour # I am testing both dictionaries to see if they stored the values or not.
+# The eye test looks good right now.
+​
+​
+​
+hour
+# FOr this section we now seek to calculate the average post per hour for each individual hour.
+# To find the relationship between time and the number of average Ask Posts.
+# First we should create an empty list to store the data.
+avg_by_hour = []
+​
+# We now should Iterated over all the data that was stored in comments_by_Hour.
+​
+for hours in comments_by_hour:
+    # We should now append all the hour average posts into avg_by_hour
+    # This should help us to identify which hour is likely to gain the most posts.
+    avg_by_hour.append([hours, comments_by_hour[hours] / counts_by_hour[hours]])
+    # This step is to calculate is store both the value of the hour in relationship 
+    # with the average number of posts for that hour.
+    
+# Let us now print the avg_by_hour list to find out if we have done it correctly or not.
+avg_by_hour
+
+# Although we have all the data that we need to make the conclusion,
+# We can make it easier to read, by changing the average to the first value
+# and the second as time. 
+# This allows for much easier sorting afterwards
+# We can create another list in this case.
+swap_avg_by_hour = []
+​
+for items in avg_by_hour:
+    first = items[1]
+    second = items[0]
+    swap_avg_by_hour.append([first, second])
+    
+# This code ensures that the values from index 1 and 2 are swapped,
+# This will allow for better sorting afterwards.
+​
+#print(swap_avg_by_hour) # making sure that the values are swapped
+​
+sorted_swap = sorted(swap_avg_by_hour, reverse = True)
+​
+# we store the sorted data into a variable called sorted_swap.
+​
+# Now lets find out the top 5 hours for ask posts comments!
+​
+print("Top 5 Hours for Ask Posts Comments")
+​
+# we now have to use some string formating to fit the data into a string,
+# as we iterate through the sorted_swap data.
+​
+for avg, hr in sorted_swap[:5]:
+    print("{}: {:.2f} average comments per post".format(dt.datetime.strptime(hr, "%H").strftime("%H:%M"),avg))
+    
+    # We will format time section as hour and minute.
+    # we will include the average rounded to two decimal places.
+    # This will print out the top 5 Ask Posts with the highest average comments.
+
+With the data that we just gathered, we can answer the first two questions:
+​
+1) On average, there are more people commenting on ask hackernews than show hackernews.
+​
+2) Also the hour of the day that generates the highest level of engagement in Ask Hackernews is at 3pm in the afternoon, with an average comment per post of 38.59.
+​
+Those are my findings for this project. Thank you very much for reading, and I hope to see you at my next project on Data Quest.

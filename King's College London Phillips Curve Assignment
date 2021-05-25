@@ -1,0 +1,576 @@
+# Welcome to the First Research Project!
+
+
+#Lets import all packages
+
+import sys, os
+import numpy as np
+
+import math
+import matplotlib.pyplot as plt
+import matplotlib.mlab as mlab
+import matplotlib.gridspec as gridspec
+import seaborn as sns
+import scipy as sp
+import pandas as pd
+from   scipy import stats
+from   scipy.stats import uniform
+from   statistics import mean
+from   statsmodels.tsa.stattools import acf, pacf, adfuller
+import statsmodels.api as sm
+from   statsmodels.api import OLS
+import sklearn
+from   sklearn import linear_model, metrics
+from   sklearn.metrics import mean_squared_error
+from   sklearn.linear_model import LinearRegression
+from   sklearn import preprocessing
+from   numpy import delete
+from   sklearn import linear_model, metrics
+from   sklearn.metrics import mean_squared_error
+from   sklearn.neighbors import KernelDensity
+from   scipy.stats import gaussian_kde
+from   statsmodels.graphics import tsaplots
+from   statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+import statsmodels.tsa.stattools as ts
+from   statsmodels.tsa.ar_model import AR
+from   statsmodels.stats.diagnostic import acorr_breusch_godfrey, acorr_ljungbox
+from   statsmodels.tsa.filters.filtertools import recursive_filter
+from   statsmodels.tsa.holtwinters import SimpleExpSmoothing, Holt
+from   statistics import median, stdev, mean
+import warnings
+import pmdarima as pm
+from pmdarima.model_selection import train_test_split
+
+
+
+
+# From here let us set our working directory for this final assignment
+working_dir = "C:/Users/Murphy Hou/Documents/School Coding/Introduction to Statistical Programming/Assignment/Assignment # 4/"
+os.chdir(working_dir)
+
+# We will be writing useful function and object classes in this section:
+
+def calc_stats(z):
+
+    sa1 = len(z)
+    sa2 = np.mean(z)
+    sa3 = np.median(z)
+    sa4 = np.std(z)
+    sa5 = np.min(z)
+    sa6 = np.max(z)
+    sa7 = sp.stats.skew(z)
+    sa8 = sp.stats.kurtosis(z)
+
+    S  = np.row_stack((sa1, sa2, sa3, sa4, sa5, sa6, sa7, sa8))
+    cn = ['obs', 'mean', 'median', 'std', 'min', 'max', 'skew', 'kurt']
+    S  = pd.DataFrame(S, index = cn)
+
+    return S
+
+def log_ret(z):
+    return np.log(z) - np.log(z.shift(1))
+# Used from lecture notes
+
+
+
+        
+        
+    
+#
+# Assignment #1: Phllips Curve.
+# In the assignment I chose to use Canada and Mexico as my two economies.
+# The variables that I will be using are:
+# 1. Unemployment Rate
+# 2. Consumer Price Index (CPI)
+# The data presented will be monthly data, and will be starting from Jan. 2002, and end on Feb 2021.
+
+# I will first start with the Canadian Analysis, and will follow with the 
+# Mexican Analysis.
+# The reasoning why I chose these two economies is because I want to 
+# check if the Phillips Curve relationship holds for an emerging economy 
+# and comparing the results with that of a G7 Economy. 
+
+#Let us first import the CSV file for Canadian Data.
+
+read_canada = pd.read_csv('Canada_Data.csv', parse_dates = True, index_col = 0)
+
+#Let us first do some descriptive statistics on the dataset
+
+
+# Lets make our data into a nice Matrix
+
+read_canada['Unemployment_Rate']
+
+read_canada["Consumer_Price_Index"]
+
+read_canada.iloc[0,0]
+
+read_canada.iloc[:, 1]
+
+read_canada.loc[:]["Consumer_Price_Index"]
+
+read_canada.loc[:]["Unemployment_Rate"]
+
+# Since there are no NAs, we will not be removing any missing values.
+
+# We now arrive at the EDA(Exploratory Data Analysis) Stage:
+    
+# Let us now try to plot the datasets.
+
+# In order to make the code simpler to understand, we will be using a for loop.
+
+# We will put both graphs horizontally and stacked. This will show both graphs.
+
+for i in range(1,2):
+    
+    plt.subplot(2,1,i)
+    plt.plot(read_canada["Unemployment_Rate"])
+    plt.xlabel("time")
+    plt.title('Unemployment Rate(Canada)')
+    plt.tight_layout()
+    plt.xticks(rotation="horizontal")
+    
+    plt.subplot(2,1,i+1)
+    plt.plot(read_canada['Consumer_Price_Index'])
+    plt.xlabel('time')
+    plt.title('CPI(Canada)')
+    plt.tight_layout()
+    plt.xticks(rotation="horizontal")
+    plt.show()
+
+# Let us now take a look at the ACF.
+
+# This will serve as an initial eye test to see if the set is stationary or not.
+
+plot_acf(read_canada["Consumer_Price_Index"]); plt.title("CPI ACF(Canada)") ; plt.show() 
+# The graph seems to suggests that there is a significant amount of the memory in the set.
+# This could be an indication that the series is non-stationary.
+# Let us now check acf for Unemployment Rate
+plot_acf(read_canada["Unemployment_Rate"]);plt.title("Unemployment Rate ACF(Canada)"); plt.show() 
+# This graphs shows potential of being a stationary set. 
+# Since, it returns to zero after the 7th lag, and stays at a significant level
+# past that point.
+
+# In order to be sure of this fact, we need to use an unit_root test to find out.
+# For this project we will be using the augmented Dickey-Fuller Test.
+
+canada_cpi = adfuller(read_canada['Consumer_Price_Index'])
+
+canada_ur = adfuller(read_canada['Unemployment_Rate'])
+
+#Let us now print out what the ADF test results
+
+print('ADF Statistic for Canada CPI: %f' % canada_cpi[0])
+
+print('P-Value: %f' % canada_cpi[1])
+
+print('Critical Values: ')
+
+for key, value in canada_cpi[4].items():
+    print('\t%s: %.3f' %(key,value))
+    
+print('ADF Statistics for Canada Unemployment Rate: %f' % canada_ur[0])
+
+print('P-Value: %f' % canada_ur[1])
+
+print('Critical Values: ')
+
+for key,value in canada_ur[4].items():
+    print('\t%s: %.3f' %(key, value))
+    
+# Always remember the three rules to stationarity.
+# 1. The mean is constant
+# 2. There is a finite Variance
+# 3. The Autocorrelations should depends on the lag and not on time.
+# These three facts remains constant throughout the analysis.
+    
+# In both cases, we arrived at the conclusion that both are not stationary.
+
+# The implications of this is that we need to take the first difference.
+# This will make sure the data is stationary.
+
+# Before transformations take place, lets continue looking at other useful plots,
+# also look at the descriptive statistics for both variables.
+
+# First Let us find out what the descriptive Statistics are for the sets:
+
+#CPI: # in order to show case the values remember to use print function.
+
+cpi_stats = calc_stats(read_canada['Consumer_Price_Index'])
+
+#Unemployment Rate
+
+ur_stats = calc_stats(read_canada["Unemployment_Rate"])
+
+# We can now export these Data into CSV files:
+
+cpi_stats.to_csv('Canada_cpi_stats.csv')
+
+ur_stats.to_csv("Canada_ur_stats.csv")
+
+# Let us now showcase the histogram:
+    
+plt.subplot(2,1,1)
+sns.histplot(read_canada['Consumer_Price_Index'], stat='density', 
+             bins = 10, kde=True)
+sns.kdeplot(read_canada['Consumer_Price_Index'], color='orange')
+plt.title("CPI Histogram(Canada)")
+plt.grid()
+plt.show()
+plt.subplot(2,1,2)
+sns.histplot(read_canada['Unemployment_Rate'], stat='density', 
+             bins=20, kde=True)
+sns.kdeplot(read_canada['Unemployment_Rate'], color='orange')
+plt.title("Unemployment Rate Histogram(Canada)")
+plt.grid()
+plt.show()
+plt.close()
+
+# Let us now transform the dataset, to make everything stationary.
+
+
+#Lets initialise the process:
+    
+
+
+read_canada_new = np.zeros([read_canada.shape[0], read_canada.shape[1]])
+
+for i in range(read_canada.shape[1]):
+    read_canada_new[:,i] = log_ret(read_canada.iloc[:,i])
+
+    
+read_canada_new = pd.DataFrame(read_canada_new)
+read_canada_new = read_canada_new.dropna()
+
+# since we took the first difference, let us assign date index accordingly.
+
+read_canada_new.index = read_canada.index[1:]
+read_canada_new.columns = read_canada.columns
+
+# Lets now make it percentage growth:
+
+read_canada_new = read_canada_new * 100
+
+# Let recheck all of our previous work:
+    
+# ACF for both
+
+plot_acf(read_canada_new['Consumer_Price_Index']) ;plt.title("Transformed CPI ACF(Canada)") ; plt.show()
+
+plot_acf(read_canada_new['Unemployment_Rate']);plt.title("Transformed Unemployment Rate ACF(Canada)"); plt.show()
+
+#Rerun ADF test:
+    
+canada_cpi2 = adfuller(read_canada_new['Consumer_Price_Index'])
+
+canada_ur2 = adfuller(read_canada_new['Unemployment_Rate'])
+
+print('ADF Statistic for Canada CPI2: %f' % canada_cpi2[0])
+
+print('P-Value: %f' % canada_cpi2[1])
+
+print('Critical Values: ')
+
+for key, value in canada_cpi2[4].items():
+    print('\t%s: %.3f' %(key,value))
+    
+print('ADF Statistics for Canada Unemployment Rate2: %f' % canada_ur2[0])
+
+print('P-Value: %f' % canada_ur2[1])
+
+print('Critical Values: ')
+
+for key,value in canada_ur2[4].items():
+    print('\t%s: %.3f' %(key, value))    
+
+# We now have confirmation that the series is stationary.
+# Which means we reject the null that there exists an unit root.
+
+# Lets now create a linear model with the information we have.
+#yc denotes y axis for canada, xc x axis for canada.
+yc = read_canada_new['Consumer_Price_Index']
+xc = read_canada_new['Unemployment_Rate']
+
+# we will now create a model based on the variables we have defined.
+
+plt.plot(xc,yc, 'o')
+
+plt.title("Scatterplot")
+
+m, b = np.polyfit(xc, yc, 1)
+
+plt.plot(xc, m*xc + b)
+
+plt.show()
+
+modc = sm.OLS(yc, xc, hasconst= True).fit()
+print(modc.summary())
+
+# There exists a significant relationship between CPI and Unemployment rate
+# with a p-value of 0.004, which is less than 0.1. The relationship is furthermore
+# negative, which is constant with the philips curve.
+# Two ways to tell the relationship: 1) by looking at the coefficient. A negative coefficient
+# signifies a negative relationship. 2) Look at the best fit line.
+
+# We should now look at our residuals to further interpret the results.
+
+
+
+
+# The final question to ask is are the residuals stationary?
+
+plt.plot(modc.resid, 'ro')
+plt.title("Residual Scatterplot for Canada")
+plt.show()
+
+
+adf_residual_canada = adfuller(modc.resid)
+
+print('P-Value: %f' %adf_residual_canada[1])
+
+# What we can conclude is that the p-value is very small, which means that 
+# the residuals are indeed stationary. Furthermore, we can also conclude
+# that the relationship negative relationship between CPI and Unemployment also 
+# holds. Which means that Phillips Curve relationship holds.
+
+#Let us first import the CSV file for Mexican Data.
+
+read_mexico = pd.read_csv('Mexico_Data.csv', parse_dates = True, index_col = 0)
+
+#Let us first do some descriptive statistics on the dataset
+
+
+# Lets make our data into a nice Matrix
+
+read_mexico['Unemployment_Rate']
+
+read_mexico["CPI"]
+
+read_mexico.iloc[0,0]
+
+read_mexico.iloc[:, 1]
+
+read_mexico.loc[:]["CPI"]
+
+read_mexico.loc[:]["Unemployment_Rate"]
+
+# Since there are no NAs, we will not be removing any missing values.
+
+# We now arrive at the EDA(Exploratory Data Analysis) Stage:
+    
+# Let us now try to plot the datasets.
+
+# In order to make the code simpler to understand, we will be using a for loop.
+
+# We will put both graphs horizontally and stacked. This will show both graphs.
+
+for i in range(1,2):
+    
+    plt.subplot(2,1,i)
+    plt.plot(read_mexico["Unemployment_Rate"])
+    plt.xlabel("time")
+    plt.title('Unemployment Rate(Mexico)')
+    plt.tight_layout()
+    plt.xticks(rotation="horizontal")
+    
+    plt.subplot(2,1,i+1)
+    plt.plot(read_mexico['CPI'])
+    plt.xlabel('time')
+    plt.title('CPI(Mexico)')
+    plt.tight_layout()
+    plt.xticks(rotation="horizontal")
+    plt.show()
+
+# Let us now take a look at the ACF.
+
+# This will serve as an initial eye test to see if the set is stationary or not.
+
+plot_acf(read_mexico["CPI"]);plt.title("CPI ACF(Mexico)") ; plt.show() 
+# The graph seems to suggests that there is a significant amount of the memory in the set.
+# This could be an indication that the series is non-stationary.
+# Let us now check acf for Unemployment Rate
+plot_acf(read_mexico["Unemployment_Rate"]);plt.title("Unemployment Rate ACF(Mexico)"); plt.show() 
+# This graphs shows that the series seeems to be non-stationary
+
+
+# In order to be sure of this fact, we need to use an unit_root test to find out.
+# For this project we will be using the augmented Dickey-Fuller Test.
+
+mexico_cpi = adfuller(read_mexico['CPI'])
+
+mexico_ur = adfuller(read_mexico['Unemployment_Rate'])
+
+#Let us now print out what the ADF test results
+
+print('ADF Statistic for Mexico CPI: %f' % mexico_cpi[0])
+
+print('P-Value: %f' % mexico_cpi[1])
+
+print('Critical Values: ')
+
+for key, value in mexico_cpi[4].items():
+    print('\t%s: %.3f' %(key,value))
+    
+print('ADF Statistics for Mexico Unemployment Rate: %f' % mexico_ur[0])
+
+print('P-Value: %f' % mexico_ur[1])
+
+print('Critical Values: ')
+
+for key,value in mexico_ur[4].items():
+    print('\t%s: %.3f' %(key, value))
+    
+# In both cases, we arrived at the conclusion that both are not stationary.
+
+# The implications of this is that we need to take the first difference.
+# This will make sure the data is stationary.
+
+# Before transformations take place, lets continue looking at other useful plots,
+# also look at the descriptive statistics for both variables.
+
+# First Let us find out what the descriptive Statistics are for the sets:
+
+#CPI: # in order to show case the values remember to use print function.
+
+mexico_cpi_stats = calc_stats(read_mexico['CPI'])
+
+#Unemployment Rate
+
+mexico_ur_stats = calc_stats(read_mexico["Unemployment_Rate"])
+
+# We can now export these Data into CSV files:
+
+mexico_cpi_stats.to_csv('Mexico_cpi_stats.csv')
+
+mexico_ur_stats.to_csv("Mexico_ur_stats.csv")
+
+# Let us now showcase the histogram:
+    
+plt.subplot(2,1,1)
+sns.histplot(read_mexico['CPI'], stat='density', 
+             bins = 10, kde=True)
+sns.kdeplot(read_mexico['CPI'], color='orange')
+plt.title("CPI Histogram(Mexico)")
+plt.grid()
+plt.show()
+plt.subplot(2,1,2)
+sns.histplot(read_mexico['Unemployment_Rate'], stat='density', 
+             bins=20, kde=True)
+sns.kdeplot(read_mexico['Unemployment_Rate'], color='orange')
+plt.title("Unemployment Rate Histogram(Mexico)")
+plt.grid()
+plt.show()
+plt.close()
+
+# Let us now transform the dataset, to make everything stationary.
+
+
+#Lets initialise the process:
+
+read_mexico_new = np.zeros([read_mexico.shape[0], read_mexico.shape[1]])
+
+for i in range(read_mexico.shape[1]):
+    read_mexico_new[:,i] = log_ret(read_mexico.iloc[:,i])
+
+    
+read_mexico_new = pd.DataFrame(read_mexico_new)
+read_mexico_new = read_mexico_new.dropna()
+
+# since we took the first difference, let us assign date index accordingly.
+
+read_mexico_new.index = read_mexico.index[1:]
+read_mexico_new.columns = read_mexico.columns
+
+# Lets now make it percentage growth:
+
+read_mexico_new = read_mexico_new * 100
+
+# Let recheck all of our previous work:
+    
+# ACF for both
+
+plot_acf(read_mexico_new['CPI']) ;plt.title("Transformed CPI ACF(Mexico)") ; plt.show()
+
+plot_acf(read_mexico_new['Unemployment_Rate']);plt.title("Transformed Unemployment Rate ACF(Mexico)"); plt.show()
+
+#Rerun ADF test:
+    
+mexico_cpi2 = adfuller(read_mexico_new['CPI'])
+
+mexico_ur2 = adfuller(read_mexico_new['Unemployment_Rate'])
+print('ADF Statistic for Mexico CPI2: %f' % mexico_cpi2[0])
+
+print('P-Value: %f' % mexico_cpi2[1])
+
+print('Critical Values: ')
+
+for key, value in mexico_cpi2[4].items():
+    print('\t%s: %.3f' %(key,value))
+    
+print('ADF Statistics for Mexico Unemployment Rate2: %f' % mexico_ur2[0])
+
+print('P-Value: %f' % mexico_ur2[1])
+
+print('Critical Values: ')
+
+for key,value in mexico_ur2[4].items():
+    print('\t%s: %.3f' %(key, value))    
+
+# We now have confirmation that the series is stationary.
+# Which means we reject the null that there exists an unit root.
+
+# Lets now create a linear model with the information we have.
+#ym denotes y axis for mexico, xm x axis for mexico.
+ym = read_mexico_new['CPI']
+xm = read_mexico_new['Unemployment_Rate']
+
+# we will now create a model based on the variables we have defined.
+
+modm = sm.OLS(ym, xm, hasconst=True).fit()
+print(modm.summary())
+
+#Let us look at a linear regression model:
+
+plt.plot(xm, ym, 'o')
+
+plt.title("Scatterplot for Mexico")
+
+m,b = np.polyfit(xm, ym, 1)
+
+plt.plot(xm, m*xm + b)
+
+plt.show()
+
+# Two ways to tell the relationship: 1) by looking at the coefficient. A negative coefficient
+# signifies a negative relationship. 2) Look at the best fit line.
+
+    
+
+# We found that there is a negative relationship between the variables.
+# However, Unemployment_Rate is not a significant factor. 
+# This could indicate that the employment partners in emerging markets are 
+# not the same as established markets.
+
+# We should now look at our residuals to further interpret the results.
+
+plt.plot(modm.resid, 'ro')
+plt.title("Residual Scatterplot for Mexico")
+plt.show()
+
+# This shows the scatterplot of the series.
+
+# The final question to ask is are the residuals stationary?
+
+adf_residual_mexico = adfuller(modm.resid)
+
+print('P-Value: %f' %adf_residual_mexico[1])
+
+# What we can conclude is that the p-value is very small, which means that 
+# the residuals are indeed stationary. There is a negative relationship 
+# which suggests that the phillips curve relationship does exist. However,
+# our findings are non-conclusive. Perhaps in the future, Unemployment may become
+# a stronger factor towards the CPI, but for now it does not seems to be the case 
+# for mexico.
+# This concludes the coding portion of the research assignment.
+
+# Mofei Hou M.Sc. Candidate

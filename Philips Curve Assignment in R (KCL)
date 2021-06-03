@@ -1,0 +1,507 @@
+# I am now preparing the environment for the first assignment 
+# The first thing we always do is to make sure that 
+#the Global Environment is clean from prior engagements
+
+rm(list = ls())
+
+# I am now set up the directory so that we can jump straight into the coding
+#part of the assignment.
+
+setwd("C:/Users/Murphy Hou/Documents/School Coding/Introduction to Statistical Programming/Assignment/Assignment # 1/")
+
+#load any necessary packages at the beginning 
+library("moments")
+
+
+#load any functions that you want to use from an external file
+source("aux_functions.R")
+
+
+#we will analysis two series
+#Unemployment rates in Canada from 2002 onwards
+#on a monthly basis
+#and
+#CPI: prices for a basket of items in the Canadian Markets starting 
+#from 2002(Monthly Basis), where this is the base year(Index Year) for the Canadian markets.
+#The starting value is set at 100.
+#The reasoning for the pick is because I live in Canada, and is more familiar
+#with the Canadian datasets.
+#
+#The data for CPI is taken from:
+#https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=1810000401&pickMembers%5B0%5D=1.2&cubeTimeFrame.startMonth=01&cubeTimeFrame.startYear=2002&cubeTimeFrame.endMonth=02&cubeTimeFrame.endYear=2021&referencePeriods=20020101%2C20210201
+#The URL is very long, please bear with me.
+#
+#The data for Unemployment is taken from:
+#https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=1410028701&pickMembers%5B0%5D=1.1&pickMembers%5B1%5D=3.1&pickMembers%5B2%5D=4.1&pickMembers%5B3%5D=5.1&cubeTimeFrame.startMonth=01&cubeTimeFrame.startYear=2002&cubeTimeFrame.endMonth=02&cubeTimeFrame.endYear=2021&referencePeriods=20020101%2C20210201
+#Another even longer URL, please bear with me.
+#A more detailed Bibliography will be provided in the essay portion of the assignment.
+#
+#In all the given data set, only the year and month are given.
+#Excel automatically assigned the date of 1st of every month
+
+
+#now load the csv data: use read.csv and I will be storing the information 
+#in variable d1(for dataset 1)
+
+d1 <- read.csv("Canada_Data.csv", header=TRUE)
+
+# I am next going to make the data in a nice and numeric matrix!
+# first step is extracting the dates
+
+d <- d1[,1]
+
+# redefine the data object
+
+d1 <- as.matrix(d1[,2:NCOL(d1)])
+
+#Time to add back the dates as row names.
+
+rownames(d1) <- d
+
+#Exploratory Data Analysis(EDA)
+
+d <- as.Date(d)
+
+#Let us make a plot for both variables:
+pdf("1_common_plot.pdf", width=11.23, height=8.69)
+
+par(mfrow=c(1,2)) # This command creat a space to make both plots with 1 row and 2 columns
+                  # this means that the plots will be made one next to the other
+  for(i in 1:NCOL(d1))
+  {
+    plot(d, d1[,i], type="l", main = colnames(d1)[i], xlab="Time", 
+     ylab="Values", col="blue",lwd = 3, lty = 1 )
+  }
+par(mfrow=c(1,1)) #make the space with unique plot again
+dev.off()
+
+#calculate the ACF, ACF is how much persistence we have 
+#between lags of our variable.
+#In Mathematical terms is the degree of persistence
+#between yt and yt-k.
+
+
+acf(d1[,1])
+acf(d1[,2])
+
+#for a series to be stationary you need 3 conditions
+#(1) the series should have a constant mean
+#                       (that the series should deviate above/below a fixed point)
+#(2) variance should be finite
+#(3) autocorrelations should only depend on lag "k" and NOT on time "t"
+#
+#by doing time series plot, ACF, etc. we see that both our series
+#are non-stationary
+#so, we have to transform them to stationarity:
+#
+#we can formally test for stationarity using a unit root
+#test such as Augmented Dickey-Duller test, 
+#Phillips-Perron, etc.
+#The following is the hypothesis for testing for unit root:
+#Ho: series is non-stationary(has a unit root)
+#Ha: series is stationary
+
+#After running the test, we can see that we are able to 
+#get a p-value of 0.03503 for Unemployment
+#we can reject the Null Hypothesis on the 5% and 10% significance interval
+PP.test(d1[,1])
+
+#after running the test, we can see that we are able to
+#get a p-value of 0.01.
+#we can therefore reject the Null Hypothesis 
+#on the 5% and 10% levels of significance. 
+
+PP.test(d1[,2])
+
+# This means that x we are at least 95% confident that 
+# both sets of data are stationary.
+
+#if we are in a situation where we need to "Transform" our data to something which is stationary
+#
+#usually, this is the exact same problem we have when dealing with 
+#stock prices....follows a random walk(unit root)
+#therefore, stock prices are unpredicatble and we cannot make any analysis
+
+#so what do we do? we say that, if you transform the price(in particular,
+#calculate the returns) then you can make all your analysis on the returns.
+#
+#
+#Lets's do the same with our variables
+#we have macroeconomic variables, so in this context when we take the
+#percentage change we do not call it "return" anymore
+#we call it "growth"
+
+#start with Unemployment
+
+N <- NROW(d1)
+x <- (d1[2:N,1] - d1[1:(N-1),1]) / d1[1:(N-1),1]    
+x <- x*100
+
+#re-set your dates object accordingly
+
+d <- d[2:N]
+#has everything been done successfully?
+
+plot(d,x, main="Percentage Growth of Unemployment Rates over time", type="l",xlab="Time", ylab="Unemployment Rate %Growth", lwd=2)
+abline(h=mean(x), col="red")
+PP.test(x)
+acf(x)
+
+#continue with CPI
+
+y <- (d1[2:N,2] - d1[1:(N-1),2]) / d1[1:(N-1),2]
+y <- y*100
+
+#Let us plot for CPI:
+
+plot(d, y, main="Percentage Growth of Inflation Rates", type="l",xlab="Time", ylab="Inflation Rates % Growth", lwd=2)
+abline(h=mean(y), col="red")
+PP.test(y)
+acf(y)
+
+#Let us do a comparsion of the newly generated graphs side by side
+par(mfrow=c(1,2))
+  plot(d,x, main="% Growth of Unemployment Rates ", 
+       type="l",xlab="Time", ylab="Unemployment Rate %Growth", lwd=2)
+  abline(h=mean(x), col="red")
+  plot(d, y, main="% Growth of Inflation Rates", type="l",
+       xlab="Time", ylab="Inflation Rates % Growth", lwd=2)
+  abline(h=mean(y), col="red")
+par(mfrow=c(1,1))
+
+
+#create a boxplot: This boxplot creates a quick overview of the 95% interval of the data.
+# box plot for both variables to compare
+
+boxplot(cbind(y,x)) #where y is CPI and X is Unemployment Rate
+
+#Lets create a histogram(how our data is distributed)
+#For unemployment
+par(mfrow=c(1,2))
+  hist(x, main=colnames(d1)[1], col="red")
+ # plot(density(x),main=colnames(d1)[1])
+
+#We can also create a histogram for CPI:
+
+  hist(y, main = colnames(d1)[2], col="red")
+  #plot(density(y), main = colnames(d1)[2])
+par(mfrow=c(1,1))
+
+#It is now time to calculate the descriptive statistics
+
+d1_stats <- cbind(calculate_stats(x), calculate_stats(y))
+
+colnames(d1_stats) <- colnames(d1)
+
+#export this file
+
+write.csv(d1_stats,"d1_desc_stats.csv")
+
+#we are done with our EDA section
+
+#is there nay structural relationship underlying the two variables?
+#CPI(Growth) and Job
+#
+#period-to-period growth // CPI: P-to-P inflation
+#
+# X is employment
+# y is CPI
+
+#scatterplot
+
+plot(x,y,main="Phillips Curve for Canada", col="blue", type="p", pch=16,
+     ylab="CPI(Growth %)", xlab="Unemployment Rate(Growth %)")
+#Create a model where one variable(the independent)"explains" the 
+#dependent variable
+#Y(t)=a + b X(t) + e(t) # linear relationship
+
+out_d1 <- lm(y~x)
+
+abline(out_d1)
+
+summary(out_d1)
+
+
+#Exporting the summary of the coefficient into csv
+write.csv(as.data.frame(summary(out_d1)$coef), "Summary_Regression_Analysis_d1.csv")
+
+
+
+#In this assignment, I tried to estimate the Philips Curve
+# We find evidence that this relationship holds during the period from Jan 2002
+#to Feb 2021
+# The relationship is statistically significant.
+#
+#Phillips curve says that unemployment and Inflation have an inverse relationship
+#Unemployment increases when inflation decreases
+#or
+#when Unemployment decreases, inflation increases
+#
+#Indeed suggest the same conclusions.
+
+#we can now extract the coefficient:
+
+out_d1$coefficients
+
+e <- out_d1$residuals
+
+#now comes the analysis section:
+#first check the acf(e1)
+acf(e) #confirm the stationarity of the Error terms.
+
+#second we can create a boxplot of the error terms.
+boxplot(e)
+
+#Finally we can draw a plot of the error terms in
+#a time series manner.
+
+plot(e, type="l", lwd=3)
+
+#I am also going to include as a comparison,
+#Mexico data only includes up to Jan 2021 for both CPI and Unemployment, which is one month shorter than Canada.
+#I have chosen Mexico over USA, because Mexico is still considered by most as an emerging market.
+#while USA like Canada is considered advanced.
+#
+#I wanted to see if the Philips Curve also holds for Emerging markets, like they should for Advanced Markets.
+#now I will load the csv data: using the read.csv and I will be
+#storing the information in variable d2(for dataset 2)
+#
+#The following are links to the data set for Mexico:
+#CPI: https://fred.stlouisfed.org/series/MEXCPIALLMINMEI
+#Unemployment rate: https://fred.stlouisfed.org/series/LRHUTTTTMXM156S
+#
+#Repeat all steps from Part 1: Canada code into the Mexico Data set.
+
+#Load Mexico Data Set
+#We are observing the same factors, but as previously stated, we are one month shorter, 
+#because there is currently no observations for Feb 2021, which is fine. There is still
+#plenty of data to observe.
+
+d2 <- read.csv("Mexico_Data.csv", header=TRUE)
+
+#We are going to extract the dates again, because we want to create
+#row names that represent the dates on a later step.
+
+D <- d2[,1]
+
+#Let us redefine the data object
+
+d2 <- as.matrix(d2[,2:NCOL(d2)])
+
+#Time to add back the dates as row names to make the matrix complete.
+
+rownames(d2) <-D
+
+#Exploratory Data Analysis(EDA)
+
+D <- as.Date(D)
+
+#Let us make a plot for both variables:
+pdf("2_common_plot.pdf", width=11.23, height=8.69)
+
+par(mfrow=c(1,2)) # This command create a space to make both plots with 1 row and 2 columns
+# this means that the plots will be made one next to the other
+  for(i in 1:NCOL(d2))
+  {
+    plot(D, d2[,i], type="l", main = colnames(d2)[i], xlab="Time", 
+        ylab="Values", col="blue",lwd = 3, lty = 1 )
+  }
+par(mfrow=c(1,1)) #make the space with unique plot again
+dev.off()
+
+#calculate the ACF, ACF is how much persistence we have 
+#between lags of our variable.
+#In Mathematical terms is the degree of persistence
+#between yt and yt-k.
+
+
+acf(d2[,1])
+acf(d2[,2])
+
+#for a series to be stationary you need 3 conditions
+#(1) the series should have a constant mean
+#                       (that the series should deviate above/below a fixed point)
+#(2) variance should be finite
+#(3) autocorrelations should only depend on lag "k" and NOT on time "t"
+#
+#by doing time series plot, ACF, etc. we see that both our series
+#are non-stationary
+#so, we have to transform them to stationarity:
+#
+#we can formally test for stationarity using a unit root
+#test such as Augmented Dickey-Duller test, 
+#Phillips-Perron, etc.
+#The following is the hypothesis for testing for unit root:
+#Ho: series is non-stationary(has a unit root)
+#Ha: series is stationary
+
+#After running the test, we can see that we are able to 
+#get a p-value of 0.8079 for CPI
+#we fail to reject the Null Hypothesis that there is an unit root
+PP.test(d2[,1])
+
+#after running the test, we can see that we are able to
+#get a p-value of 0.5768 for Unemployment.
+#we can therefore fail to reject the Null Hypothesis 
+ 
+
+PP.test(d2[,2])
+
+# This means that x we are at least 95% confident that 
+# both sets of data are non-stationary.
+
+#if we are in a situation where we need to "Transform" our data to something which is stationary
+#
+#usually, this is the exact same problem we have when dealing with 
+#stock prices....follows a random walk(unit root)
+#therefore, stock prices are unpredicatble and we cannot make any analysis
+
+#so what do we do? we say that, if you transform the price(in particular,
+#calculate the returns) then you can make all your analysis on the returns.
+#
+#
+#Lets's do the same with our variables
+#we have macroeconomic variables, so in this context when we take the
+#percentage change we do not call it "return" anymore
+#we call it "growth"
+
+#start with Unemployment
+
+N1 <- NROW(d2)
+x1 <- (d2[2:N1,2] - d2[1:(N1-1),2]) / d2[1:(N1-1),2]    
+x1 <- x1*100
+
+#re-set your dates object accordingly
+
+D <- D[2:N1]
+#has everything been done successfully?
+
+plot(D,x1, type="l")
+abline(h=mean(x1), col="red")
+PP.test(x1)
+acf(x1)
+
+#continue with CPI
+
+y1 <- (d2[2:N1,1] - d2[1:(N1-1),1]) / d2[1:(N1-1),1]
+y1 <- y1*100
+
+#Let us plot for CPI:
+
+plot(D, y1, type="l")
+abline(h=mean(y1), col="red")
+PP.test(y1)
+acf(y1)
+
+#Let us put the graphs side by side for the paper
+
+par(mfrow=c(1,2))
+  plot(D,x1,main="Stationary plot for Unemployment Rate", type="l", xlab="Time", ylab="Values"
+       , col= "blue", lwd=3,lty=1)
+  abline(h=mean(x1), col="red")
+  plot(D,y1,main="Stationary plot for CPI", type="l", xlab="Time", ylab="Values",
+       col="blue", lwd=3, lty=1)
+  abline(h=mean(y1), col="red")
+par(mfrow=c(1,1))
+#create a boxplot: This boxplot creates a quick overview of the 95% interval of the data.
+# box plot for both variables to compare
+
+boxplot(cbind(y1,x1)) #where y is CPI and X is Unemployment Rate
+
+#Lets create a histogram(how our data is distributed)
+#For unemployment
+par(mfrow=c(1,2))
+  hist(x1, main=colnames(d1)[1], col="red")
+  # plot(density(x),main=colnames(d1)[1])
+
+  #We can also create a histogram for CPI:
+
+  hist(y1, main = colnames(d1)[2], col="red")
+  #plot(density(y), main = colnames(d1)[2])
+par(mfrow=c(1,1))
+
+#It is now time to calculate the descriptive statistics
+#I have flipped the Mexico Data with initially entering the data set
+#excel
+
+d2_stats <- cbind(calculate_stats(y1), calculate_stats(x1))
+
+colnames(d2_stats) <- colnames(d2)
+
+#export this file
+
+write.csv(d2_stats,"d2_desc_stats.csv")
+
+#we are done with our EDA section
+
+#is there any structural relationship underlying the two variables?
+#CPI(Growth) and Job
+#
+#period-to-period growth // CPI: P-to-P inflation
+#
+# X is employment
+# y is CPI
+
+#scatterplot
+
+plot(x1,y1,main="Phillips Curve for Mexico", col="blue", type="p", pch=16,
+     ylab="CPI(Growth %)", xlab="Unemployment Rate(Growth %)")
+#Create a model where one variable(the independent)"explains" the 
+#dependent variable
+#Y(t)=a + b X(t) + e(t) # linear relationship
+
+out_d2 <- lm(y1~x1)
+
+abline(out_d2)
+
+summary(out_d2)
+
+#I want to check to see if the linear model is the right fit for the 
+#data. In order to do, I must do some analysis on the residuals.
+
+e1 <- out_d2$residuals
+
+#now comes the analysis section:
+#first check the acf(e1)
+acf(e1) #confirm the stationarity of the Error terms.
+
+#second we can create a boxplot of the error terms.
+boxplot(e1)
+
+#Finally we can draw a plot of the error terms in a 
+#time series manner.
+
+plot(e1, type="l", lwd=3)
+
+#export the summary of the regression analysis
+
+write.csv(as.data.frame(summary(out_d2)$coef), 
+          "Summary_Regression_Analysis_d2.csv")
+
+#It seems that there is a slight negative co-efficient 
+#as the beta factor. The only slight cause for concern is
+#the p-value and the confidence factor.
+
+
+
+
+#In this assignment, I tried to estimate the Philips Curve
+# We find evidence that this relationship holds during the period from Jan 2002
+#to January 2021
+# The relationship is statistically significant for Canada
+#and inconclusive for Mexico, although, there is a slight
+#negative correlation.
+#
+#Phillips curve says that unemployment and Inflation have an inverse relationship
+#Unemployment increases when inflation decreases
+#or
+#when Unemployment decreases, inflation increases
+#
+#Indeed suggest the same conclusions.
+#
+#
+#Thank you very much for reviewing my first assignment
+#It has been a very great experience, and I 
+#am starting to understand the importance 
+#of learning to code as a future economist.
+

@@ -14,6 +14,46 @@
 # Contemporaneous Multiple Regression Analysis and also a 
 # Predictive Regression Analysis.
 
+#Lets import all packages
+
+import sys, os
+import numpy as np
+
+import math
+import matplotlib.pyplot as plt
+import matplotlib.mlab as mlab
+import matplotlib.gridspec as gridspec
+import seaborn as sns
+import scipy as sp
+import pandas as pd
+from   scipy import stats
+from   scipy.stats import uniform
+from   statistics import mean
+from   statsmodels.tsa.stattools import acf, pacf, adfuller
+import statsmodels.api as sm
+from   statsmodels.api import OLS
+import sklearn
+from   sklearn import linear_model, metrics
+from   sklearn.metrics import mean_squared_error
+from   sklearn.linear_model import LinearRegression
+from   sklearn import preprocessing
+from   numpy import delete
+from   sklearn import linear_model, metrics
+from   sklearn.metrics import mean_squared_error
+from   sklearn.neighbors import KernelDensity
+from   scipy.stats import gaussian_kde
+from   statsmodels.graphics import tsaplots
+from   statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+import statsmodels.tsa.stattools as ts
+from   statsmodels.tsa.ar_model import AR
+from   statsmodels.stats.diagnostic import acorr_breusch_godfrey, acorr_ljungbox
+from   statsmodels.tsa.filters.filtertools import recursive_filter
+from   statsmodels.tsa.holtwinters import SimpleExpSmoothing, Holt
+from   statistics import median, stdev, mean
+import warnings
+import pmdarima as pm
+from pmdarima.model_selection import train_test_split
+
 # Let us begin our analysis with the Datasets from the United Kingdom.
 # I will first load the dataset.
 

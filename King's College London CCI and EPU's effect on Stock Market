@@ -1,0 +1,872 @@
+# Welcome to Assignment 2!
+##In this assignment we will be discussing 
+#Economic Policy Uncertainity and also
+# Consumer Confidence when looking at three seperate economies.
+# I will be spliting all the coding section into three seperate 
+#sections, because we will be exploring three different states.
+# The countries that I will be exploring are: 1) United Kingdom
+# 2) USA, and 3) Japan. 
+
+# The early stages of the assignment will be quite similar to 
+# that of the first assignment. We will go through the Exploratory
+# Data Analysis phase and go through Data Transformations.
+# What is a bit different is that we will complete both a
+# Contemporaneous Multiple Regression Analysis and also a 
+# Predictive Regression Analysis.
+
+# Let us begin our analysis with the Datasets from the United Kingdom.
+# I will first load the dataset.
+
+# Let us first load the dataset from the United Kingdom
+
+read_UK = pd.read_csv('UK_Data.csv', parse_dates = True, index_col = 0)
+
+#Let us first do some descriptive statistics on the dataset
+
+
+# Lets make our data into a nice Matrix
+
+read_UK['FTSE 100 Adjusted Closing Prices']
+
+read_UK["UK Economic Policy Uncertainty"]
+
+read_UK['UK Consumer Confidence Index']
+
+read_UK.iloc[0,0]
+
+read_UK.iloc[:, 1]
+
+read_UK.loc[:]['FTSE 100 Adjusted Closing Prices']
+
+read_UK.loc[:]["UK Economic Policy Uncertainty"]
+
+read_UK.loc[:]['UK Consumer Confidence Index']
+
+# Since there are no NAs, we will not be removing any missing values.
+
+# We now arrive at the EDA(Exploratory Data Analysis) Stage:
+    
+# Let us now try to plot the datasets.
+
+# In order to make the code simpler to understand, we will be using a for loop.
+
+# We will put both graphs horizontally and stacked. This will show both graphs.
+
+for i in range(1,2):
+    
+    plt.subplot(2,1,i)
+    plt.plot(read_UK["UK Consumer Confidence Index"])
+    plt.xlabel("time")
+    plt.title('UK CCI')
+    plt.tight_layout()
+    plt.xticks(rotation="horizontal")
+    
+    plt.subplot(2,1,i+1)
+    plt.plot(read_UK['UK Economic Policy Uncertainty'])
+    plt.xlabel('time')
+    plt.title('UK EPU')
+    plt.tight_layout()
+    plt.xticks(rotation="horizontal")
+    
+    plt.show()
+    
+# Since, we can only put two graphs together, let us create a seperate graph
+# for FTSE 100, I tried range 3, but it gave me an error stating num <= 2.
+
+plt.plot(read_UK['FTSE 100 Adjusted Closing Prices'])
+plt.xlabel("Time")
+plt.title("FTSE 100")
+plt.xticks(rotation='horizontal')
+
+# Let us now take a look at the ACF.
+
+# This will serve as an initial eye test to see if the set is stationary or not.
+
+plot_acf(read_UK["FTSE 100 Adjusted Closing Prices"]);plt.title("FTSE 100 ACF") ; plt.show() 
+# The graph seems to suggests that there is a significant amount of the memory in the set.
+# This could be an indication that the series is non-stationary.
+
+plot_acf(read_UK["UK Economic Policy Uncertainty"]);plt.title("UK EPU ACF"); plt.show() 
+# This graphs shows that the series seems that there might be a potential
+# after lag 5 to return to 0.
+# These are the reporting from the eye test for the United Kingdom EPU.
+
+plot_acf(read_UK['UK Consumer Confidence Index']); plt.title('UK CCI ACF'); plt.show()
+# Although the CCI returns to significant area after the 10th lag, it may 
+# still be non-stationary, since the memory of the set is decreasing so 
+# gradually.
+
+# In order to be sure of this fact, we need to use an unit_root test to find out.
+# For this project we will be using the augmented Dickey-Fuller Test.
+
+UK_FTSE = adfuller(read_UK['FTSE 100 Adjusted Closing Prices'])
+
+UK_EPU = adfuller(read_UK['UK Economic Policy Uncertainty'])
+
+UK_CCI = adfuller(read_UK['UK Consumer Confidence Index'])
+
+#Let us now print out what the ADF test results
+
+print('ADF Statistic for FTSE: %f' % UK_FTSE[0])
+
+print('P-Value: %f' % UK_FTSE[1])
+
+print('Critical Values: ')
+
+for key, value in UK_FTSE[4].items():
+    print('\t%s: %.3f' %(key,value))
+    
+print('ADF Statistics for UK EPU: %f' % UK_EPU[0])
+
+print('P-Value: %f' % UK_EPU[1])
+
+print('Critical Values: ')
+
+for key,value in UK_EPU[4].items():
+    print('\t%s: %.3f' %(key, value))
+    
+print('ADF Statistics for UK CCI: %f' % UK_CCI[0])
+
+print('P-Value: %f' % UK_CCI[1])
+
+print('Critical Values: ')
+
+for key,value in UK_CCI[4].items():
+    print('\t%s: %.3f' %(key, value))
+    
+# In all three cases, we arrived at the conclusion that they are not stationary.
+
+# The implications of this is that we need to take the first difference.
+# This will make sure the data is stationary.
+
+# Before transformations take place, lets continue looking at other useful plots,
+# also look at the descriptive statistics for both variables.
+
+# First Let us find out what the descriptive Statistics are for the sets:
+
+#ftse: # in order to show case the values remember to use print function.
+
+uk_ftse_stats = calc_stats(read_UK['FTSE 100 Adjusted Closing Prices'])
+
+#Uk epu
+
+uk_epu_stats = calc_stats(read_UK['UK Economic Policy Uncertainty'])
+
+#UK CCI
+
+uk_cci_stats = calc_stats(read_UK['UK Consumer Confidence Index'])
+
+# We can now export these Data into CSV files:
+
+uk_ftse_stats.to_csv('uk_ftse_stats.csv')
+
+uk_epu_stats.to_csv("uk_epu_stats.csv")
+
+uk_cci_stats.to_csv("uk_cci_stats.csv")
+
+# Let us now showcase the histogram:
+    
+plt.subplot(2,1,1)
+sns.histplot(read_UK['UK Economic Policy Uncertainty'], stat='density', 
+             bins = 10, kde=True)
+sns.kdeplot(read_UK['UK Economic Policy Uncertainty'], color='orange')
+plt.title("UK EPU Histogram")
+plt.grid()
+plt.show()
+plt.subplot(2,1,2)
+sns.histplot(read_UK['UK Consumer Confidence Index'], stat='density', 
+             bins=20, kde=True)
+sns.kdeplot(read_UK['UK Consumer Confidence Index'], color='orange')
+plt.title("UK CCI Histogram")
+plt.grid()
+plt.show()
+plt.close()
+
+# Just in Case, I will create a seperate subplot for the Stock exchange
+sns.histplot(read_UK['FTSE 100 Adjusted Closing Prices'], stat='density',
+             bins=20, kde=True)
+sns.kdeplot(read_UK['FTSE 100 Adjusted Closing Prices'], color='orange')
+plt.title("FTSE 100 Histogram")
+plt.grid()
+plt.show()
+
+#Lets start the process of transformation
+
+#Lets initialise the process:
+
+read_UK_new = np.zeros([read_UK.shape[0], read_UK.shape[1]])
+
+for i in range(read_UK.shape[1]):
+    read_UK_new[:,i] = log_ret(read_UK.iloc[:,i])
+
+    
+read_UK_new = pd.DataFrame(read_UK_new)
+read_UK_new = read_UK_new.dropna()
+
+# since we took the first difference, let us assign date index accordingly.
+
+read_UK_new.index = read_UK.index[1:]
+read_UK_new.columns = read_UK.columns
+
+# Let us now recheck our work
+
+UK_FTSE2 = adfuller(read_UK_new['FTSE 100 Adjusted Closing Prices'])
+
+UK_EPU2 = adfuller(read_UK_new['UK Economic Policy Uncertainty'])
+
+UK_CCI2 = adfuller(read_UK_new['UK Consumer Confidence Index'])
+
+#Let us now print out what the ADF test results
+
+print('ADF Statistic for FTSE2: %f' % UK_FTSE2[0])
+
+print('P-Value: %f' % UK_FTSE2[1])
+
+print('Critical Values: ')
+
+for key, value in UK_FTSE2[4].items():
+    print('\t%s: %.3f' %(key,value))
+    
+print('ADF Statistics for UK EPU2: %f' % UK_EPU2[0])
+
+print('P-Value: %f' % UK_EPU2[1])
+
+print('Critical Values: ')
+
+for key,value in UK_EPU2[4].items():
+    print('\t%s: %.3f' %(key, value))
+    
+print('ADF Statistics for UK CCI2: %f' % UK_CCI2[0])
+
+print('P-Value: %f' % UK_CCI2[1])
+
+print('Critical Values: ')
+
+for key,value in UK_CCI2[4].items():
+    print('\t%s: %.3f' %(key, value))
+
+# With the very small P-value, we have now ensured that the series
+# are now stationary.
+# Let us now look at completing the Contemporaneous Regression Analysis.
+
+XUK = read_UK_new.iloc[:,1:3]
+
+yuk= read_UK_new['FTSE 100 Adjusted Closing Prices']
+
+estimate_UK = sm.OLS(yuk, XUK).fit()
+estimate_UK.summary()
+
+# It seems that the CCI is not a statistically significant variable,
+# in a multiple regression setting.
+
+
+for ii in range(XUK.shape[1]):
+
+    plt.scatter(XUK.iloc[:, ii], yuk)
+    plt.title("Scatterplot")
+    model = sm.OLS(yuk, XUK.iloc[:, ii]).fit()
+    slope = model.params[0]
+    abline_values = [slope * i for i in XUK.iloc[:, ii]]
+   
+    plt.plot(XUK.iloc[:,ii], abline_values, 'b')
+    plt.title('slope')
+    
+    
+    plt.show()    
+
+# From their respective regression graphs we can see that CCI and Stock Exchange
+# has a positive relationship and EPU and Stock Market has a negative relationship.
+# This is constant with our logical inferences.
+
+# Let us check for a one month lag, because if it is not significant in one month
+# It should not be significant otherwise. 
+
+NUK = read_UK_new.shape[0]
+
+yp = read_UK_new.iloc[1:NUK,0]
+
+xp = read_UK_new.iloc[0:(NUK-1), 1:3]   
+    
+yp = np.array(yp)
+
+xp = np.array(xp)
+
+out_ukp = sm.OLS(yp, xp).fit()
+
+out_ukp.summary()
+
+# Not significant, which means that any changes to CCI or EPU will
+# have an immediate impact on the Stock market.
+
+# Next let us look at The United States.
+# For the Stock market index, NASDAQ will be used.
+
+read_USA = pd.read_csv('USA_Data.csv', parse_dates = True, index_col = 0)
+
+#Let us first do some descriptive statistics on the dataset
+
+
+# Lets make our data into a nice Matrix
+read_USA['NASDAQ Adjusted Closing Price']
+
+read_USA["USA Policy Uncertainty Index"]
+
+read_USA['USA Consumer Confidence Index']
+
+read_USA.iloc[0,0]
+
+read_USA.iloc[:, 1]
+
+read_USA.loc[:]['NASDAQ Adjusted Closing Price']
+
+read_USA.loc[:]["USA Policy Uncertainty Index"]
+
+read_USA.loc[:]['USA Consumer Confidence Index']
+
+# We will be removing the NAs that exists in the dataset
+read_USA = read_USA.dropna()
+
+# We now arrive at the EDA(Exploratory Data Analysis) Stage:
+    
+# Let us now try to plot the datasets.
+
+# In order to make the code simpler to understand, we will be using a for loop.
+
+# We will put both graphs horizontally and stacked. This will show both graphs.
+
+for i in range(1,2):
+    
+    plt.subplot(2,1,i)
+    plt.plot(read_USA["USA Consumer Confidence Index"])
+    plt.xlabel("time")
+    plt.title('USA CCI')
+    plt.tight_layout()
+    plt.xticks(rotation="horizontal")
+    
+    plt.subplot(2,1,i+1)
+    plt.plot(read_USA['USA Policy Uncertainty Index'])
+    plt.xlabel('time')
+    plt.title('USA EPU')
+    plt.tight_layout()
+    plt.xticks(rotation="horizontal")
+    
+    plt.show()
+    
+# Since, we can only put two graphs together, let us create a seperate graph
+# for NASDAQ-, I tried range 3, but it gave me an error stating num <= 2.
+
+plt.plot(read_USA['NASDAQ Adjusted Closing Price'])
+plt.xlabel("Time")
+plt.title("NASDAQ")
+plt.xticks(rotation='horizontal')
+
+# Let us now take a look at the ACF.
+
+# This will serve as an initial eye test to see if the set is stationary or not.
+
+plot_acf(read_USA["NASDAQ Adjusted Closing Price"]);plt.title("NASDAQ ACF") ; plt.show() 
+# The graph seems to suggests that there is a significant amount of the memory in the set.
+# This could be an indication that the series is non-stationary.
+
+plot_acf(read_USA["USA Policy Uncertainty Index"]);plt.title("USA EPU ACF"); plt.show() 
+# This graphs shows that the series seems that there might be a potential
+# after lag 7 to return to 0. It is quite a large decline in memory post lag 7.
+# These are the results for EPU.
+
+plot_acf(read_USA['USA Consumer Confidence Index']); plt.title('USA CCI ACF'); plt.show()
+# Although the CCI returns to significant area after the 10th lag, it may 
+# still be non-stationary, since the memory of the set is decreasing so 
+# gradually.
+
+# In order to be sure of this fact, we need to use an unit_root test to find out.
+# For this project we will be using the augmented Dickey-Fuller Test.
+
+USA_NASDAQ = adfuller(read_USA['NASDAQ Adjusted Closing Price'])
+
+USA_EPU = adfuller(read_USA['USA Policy Uncertainty Index'])
+
+USA_CCI = adfuller(read_USA['USA Consumer Confidence Index'])
+
+#Let us now print out what the ADF test results
+
+print('ADF Statistic for NASDAQ: %f' % USA_NASDAQ[0])
+
+print('P-Value: %f' % USA_NASDAQ[1])
+
+print('Critical Values: ')
+
+for key, value in USA_NASDAQ[4].items():
+    print('\t%s: %.3f' %(key,value))
+    
+print('ADF Statistics for USA EPU: %f' % USA_EPU[0])
+
+print('P-Value: %f' % USA_EPU[1])
+
+print('Critical Values: ')
+
+for key,value in USA_EPU[4].items():
+    print('\t%s: %.3f' %(key, value))
+    
+print('ADF Statistics for USA CCI: %f' % USA_CCI[0])
+
+print('P-Value: %f' % USA_CCI[1])
+
+print('Critical Values: ')
+
+for key,value in USA_CCI[4].items():
+    print('\t%s: %.3f' %(key, value))
+    
+# In all three cases, we arrived at the conclusion that they are not stationary.
+
+# The implications of this is that we need to take the first difference.
+# This will make sure the data is stationary.
+
+# Before transformations take place, lets continue looking at other useful plots,
+# also look at the descriptive statistics for both variables.
+
+# First Let us find out what the descriptive Statistics are for the sets:
+
+#NASDAQ: # in order to show case the values remember to use print function.
+# or refer to the exported csv files.
+
+usa_nasdaq_stats = calc_stats(read_USA['NASDAQ Adjusted Closing Price'])
+
+#USA epu
+
+usa_epu_stats = calc_stats(read_USA['USA Policy Uncertainty Index'])
+
+#USA CCI
+
+usa_cci_stats = calc_stats(read_USA['USA Consumer Confidence Index'])
+
+# We can now export these Data into CSV files:
+
+usa_nasdaq_stats.to_csv('usa_nasdaq_stats.csv')
+
+usa_epu_stats.to_csv("usa_epu_stats.csv")
+
+usa_cci_stats.to_csv("usa_cci_stats.csv")
+
+# Let us now showcase the histogram:
+    
+plt.subplot(2,1,1)
+sns.histplot(read_USA['USA Policy Uncertainty Index'], stat='density', 
+             bins = 10, kde=True)
+sns.kdeplot(read_USA['USA Policy Uncertainty Index'], color='orange')
+plt.title("USA EPU Histogram")
+plt.grid()
+plt.show()
+plt.subplot(2,1,2)
+sns.histplot(read_USA['USA Consumer Confidence Index'], stat='density', 
+             bins=20, kde=True)
+sns.kdeplot(read_USA['USA Consumer Confidence Index'], color='orange')
+plt.title("USA CCI Histogram")
+plt.grid()
+plt.show()
+plt.close()
+
+# Just in Case, I will create a seperate subplot for the Stock exchange
+sns.histplot(read_USA['NASDAQ Adjusted Closing Price'], stat='density',
+             bins=20, kde=True)
+sns.kdeplot(read_USA['NASDAQ Adjusted Closing Price'], color='orange')
+plt.title("NASDAQ Histogram")
+plt.grid()
+plt.show()
+
+#Lets start the process of transformation
+
+#Lets initialise the process:
+
+read_USA_new = np.zeros([read_USA.shape[0], read_USA.shape[1]])
+
+for i in range(read_USA.shape[1]):
+    read_USA_new[:,i] = log_ret(read_USA.iloc[:,i])
+
+    
+read_USA_new = pd.DataFrame(read_USA_new)
+read_USA_new = read_USA_new.dropna()
+
+# since we took the first difference, let us assign date index accordingly.
+
+read_USA_new.index = read_USA.index[1:]
+read_USA_new.columns = read_USA.columns
+
+# Let us now recheck our work
+
+USA_NASDAQ2 = adfuller(read_USA_new['NASDAQ Adjusted Closing Price'])
+
+USA_EPU2 = adfuller(read_USA_new['USA Policy Uncertainty Index'])
+
+USA_CCI2 = adfuller(read_USA_new['USA Consumer Confidence Index'])
+
+#Let us now print out what the ADF test results after the
+# transformation.
+
+
+print('ADF Statistic for NASDAQ2: %f' % USA_NASDAQ2[0])
+
+print('P-Value: %f' % USA_NASDAQ2[1])
+
+print('Critical Values: ')
+
+for key, value in USA_NASDAQ2[4].items():
+    print('\t%s: %.3f' %(key,value))
+    
+print('ADF Statistics for USA EPU2: %f' % USA_EPU2[0])
+
+print('P-Value: %f' % USA_EPU2[1])
+
+print('Critical Values: ')
+
+for key,value in USA_EPU2[4].items():
+    print('\t%s: %.3f' %(key, value))
+    
+print('ADF Statistics for USA CCI2: %f' % USA_CCI2[0])
+
+print('P-Value: %f' % USA_CCI2[1])
+
+print('Critical Values: ')
+
+for key,value in USA_CCI2[4].items():
+    print('\t%s: %.3f' %(key, value))
+
+# With the very small P-value, we have now ensured that the series
+# are now stationary.
+# Let us now look at completing the Contemporaneous Regression Analysis.
+
+XUSA = read_USA_new.iloc[:,1:3]
+
+yusa= read_USA_new['NASDAQ Adjusted Closing Price']
+
+estimate_USA = sm.OLS(yusa, XUSA).fit()
+estimate_USA.summary()
+
+# It seems that the CCI is not a statistically significant variable,
+# in a multiple regression setting.
+
+
+for ii in range(XUSA.shape[1]):
+
+    plt.scatter(XUSA.iloc[:, ii], yusa)
+    plt.title("Scatterplot")
+    model_us = sm.OLS(yusa, XUSA.iloc[:, ii]).fit()
+    slope_us = model_us.params[0]
+    abline_values_us = [slope_us * i for i in XUSA.iloc[:, ii]]
+   
+    plt.plot(XUSA.iloc[:,ii], abline_values_us, 'b')
+    plt.title('slope')
+    
+    
+    plt.show()    
+
+# From their respective regression graphs we can see that CCI and Stock Exchange
+# has a positive relationship and EPU and Stock Market has a negative relationship.
+# This is constant with our logical inferences.
+
+# Let us check for a one month lag, because if it is not significant in one month
+# It should not be significant otherwise. 
+
+NUSA = read_USA_new.shape[0]
+
+ypusa = read_USA_new.iloc[1:NUSA,0]
+
+xpusa = read_USA_new.iloc[0:(NUSA-1), 1:3]   
+    
+ypusa = np.array(ypusa)
+
+xpusa = np.array(xpusa)
+
+out_usap = sm.OLS(ypusa, xpusa).fit()
+
+out_usap.summary()
+
+# Not significant, which means that any changes to CCI or EPU will
+# have an immediate impact on the Stock market.
+
+# Finally, we will be taking a look at Japan.
+# For the Stock market index, NIKKEI will be used.
+
+read_Japan = pd.read_csv('Japan_Data.csv', parse_dates = True, index_col = 0)
+
+#Let us first do some descriptive statistics on the dataset
+
+
+# Lets make our data into a nice Matrix
+read_Japan['Adjusted Closing Prices for Nikkei 225']
+
+read_Japan["Japan Economic Policy Uncertainty"]
+
+read_Japan['Japan Consumer Confidence Index']
+
+read_Japan.iloc[0,0]
+
+read_Japan.iloc[:, 1]
+
+read_Japan.loc[:]['Adjusted Closing Prices for Nikkei 225']
+
+read_Japan.loc[:]["Japan Economic Policy Uncertainty"]
+
+read_Japan.loc[:]['Japan Consumer Confidence Index']
+
+# We will be removing the NAs that exists in the dataset
+read_Japan = read_Japan.dropna()
+
+# We now arrive at the EDA(Exploratory Data Analysis) Stage:
+    
+# Let us now try to plot the datasets.
+
+# In order to make the code simpler to understand, we will be using a for loop.
+
+# We will put both graphs horizontally and stacked. This will show both graphs.
+#used from lecture notes
+for i in range(1,2):
+    
+    plt.subplot(2,1,i)
+    plt.plot(read_Japan['Japan Consumer Confidence Index'])
+    plt.xlabel("time")
+    plt.title('Japan CCI')
+    plt.tight_layout()
+    plt.xticks(rotation="horizontal")
+    
+    plt.subplot(2,1,i+1)
+    plt.plot(read_Japan["Japan Economic Policy Uncertainty"])
+    plt.xlabel('time')
+    plt.title('Japan EPU')
+    plt.tight_layout()
+    plt.xticks(rotation="horizontal")
+    
+    plt.show()
+    
+# Since, we can only put two graphs together, let us create a seperate graph
+# for NASDAQ-, I tried range 3, but it gave me an error stating num <= 2.
+
+plt.plot(read_Japan['Adjusted Closing Prices for Nikkei 225'])
+plt.xlabel("Time")
+plt.title("NIKKEI")
+plt.xticks(rotation='horizontal')
+
+# Let us now take a look at the ACF.
+
+# This will serve as an initial eye test to see if the set is stationary or not.
+
+plot_acf(read_Japan['Adjusted Closing Prices for Nikkei 225']);plt.title("NIKKEI ACF") ; plt.show() 
+# The graph seems to suggests that there is a significant amount of the memory in the set.
+# This could be an indication that the series is non-stationary.
+
+plot_acf(read_Japan["Japan Economic Policy Uncertainty"]);plt.title("JAPAN EPU ACF"); plt.show() 
+# This graphs shows that the series seems that there might be a potential for this being a stationary series.
+# after lag 3 there is a return to 0. It is quite a large decline in memory post lag 3.
+# These are the results for EPU.
+
+plot_acf(read_Japan['Japan Consumer Confidence Index']); plt.title('JAPAN CCI ACF'); plt.show()
+# Although the CCI returns to significant area after the 7th lag, it may 
+# still be non-stationary.
+
+# In order to be sure of this fact, we need to use an unit_root test to find out.
+# For this project we will be using the augmented Dickey-Fuller Test.
+
+JAPAN_NIKKEI = adfuller(read_Japan['Adjusted Closing Prices for Nikkei 225'])
+
+JAPAN_EPU = adfuller(read_Japan["Japan Economic Policy Uncertainty"])
+
+JAPAN_CCI = adfuller(read_Japan['Japan Consumer Confidence Index'])
+
+#Let us now print out what the ADF test results
+
+print('ADF Statistic for NIKKEI: %f' % JAPAN_NIKKEI[0])
+
+print('P-Value: %f' % JAPAN_NIKKEI[1])
+
+print('Critical Values: ')
+
+for key, value in JAPAN_NIKKEI[4].items():
+    print('\t%s: %.3f' %(key,value))
+    
+print('ADF Statistics for Japan EPU: %f' % JAPAN_EPU[0])
+
+print('P-Value: %f' % JAPAN_EPU[1])
+
+print('Critical Values: ')
+
+for key,value in JAPAN_EPU[4].items():
+    print('\t%s: %.3f' %(key, value))
+    
+print('ADF Statistics for Japan CCI: %f' % JAPAN_CCI[0])
+
+print('P-Value: %f' % JAPAN_CCI[1])
+
+print('Critical Values: ')
+
+for key,value in JAPAN_CCI[4].items():
+    print('\t%s: %.3f' %(key, value))
+    
+# In two of the cases NIKKEI and CCI the variables are not stationary, 
+# Surprisingly, EPU is a stationary variable. Although, this is the case,
+# we still need to transform all the data series, because one or more of the
+# variables are non-stationary.
+
+# The implications of this is that we need to take the first difference.
+# This will make sure the data is stationary.
+
+# Before transformations take place, lets continue looking at other useful plots,
+# also look at the descriptive statistics for both variables.
+
+# First Let us find out what the descriptive Statistics are for the sets:
+
+# Nikkei: # in order to show case the values remember to use print function.
+# or refer to the exported csv files.
+
+japan_nikkei_stats = calc_stats(read_Japan['Adjusted Closing Prices for Nikkei 225'])
+
+# Japan epu
+
+japan_epu_stats = calc_stats(read_Japan["Japan Economic Policy Uncertainty"])
+
+# Japan CCI
+
+japan_cci_stats = calc_stats(read_Japan['Japan Consumer Confidence Index'])
+
+# We can now export these Data into CSV files:
+
+japan_nikkei_stats.to_csv('japan_nikkei_stats.csv')
+
+japan_epu_stats.to_csv("japan_epu_stats.csv")
+
+japan_cci_stats.to_csv("japan_cci_stats.csv")
+
+# Let us now showcase the histogram:
+    
+plt.subplot(2,1,1)
+sns.histplot(read_Japan["Japan Economic Policy Uncertainty"], stat='density', 
+             bins = 10, kde=True)
+sns.kdeplot(read_Japan["Japan Economic Policy Uncertainty"], color='orange')
+plt.title("Japan EPU Histogram")
+plt.grid()
+plt.show()
+plt.subplot(2,1,2)
+sns.histplot(read_Japan['Japan Consumer Confidence Index'], stat='density', 
+             bins=20, kde=True)
+sns.kdeplot(read_Japan['Japan Consumer Confidence Index'], color='orange')
+plt.title("Japan CCI Histogram")
+plt.grid()
+plt.show()
+plt.close()
+
+# Just in Case, I will create a seperate subplot for the Stock exchange
+sns.histplot(read_Japan['Adjusted Closing Prices for Nikkei 225'], stat='density',
+             bins=20, kde=True)
+sns.kdeplot(read_Japan['Adjusted Closing Prices for Nikkei 225'], color='orange')
+plt.title("NIKKEI Histogram")
+plt.grid()
+plt.show()
+
+#Lets start the process of transformation
+
+#Lets initialise the process:
+
+read_Japan_new = np.zeros([read_Japan.shape[0], read_Japan.shape[1]])
+
+for i in range(read_Japan.shape[1]):
+    read_Japan_new[:,i] = log_ret(read_Japan.iloc[:,i])
+
+    
+read_Japan_new = pd.DataFrame(read_Japan_new)
+read_Japan_new = read_Japan_new.dropna()
+
+# since we took the first difference, let us assign date index accordingly.
+
+read_Japan_new.index = read_Japan.index[1:]
+read_Japan_new.columns = read_Japan.columns
+
+# Let us now recheck our work
+
+JAPAN_NIKKEI2 = adfuller(read_Japan_new['Adjusted Closing Prices for Nikkei 225'])
+
+JAPAN_EPU2 = adfuller(read_Japan_new["Japan Economic Policy Uncertainty"])
+
+JAPAN_CCI2 = adfuller(read_Japan_new['Japan Consumer Confidence Index'])
+
+#Let us now print out what the ADF test results after the
+# transformation.
+
+
+print('ADF Statistic for NIKKEI2: %f' % JAPAN_NIKKEI2[0])
+
+print('P-Value: %f' % JAPAN_NIKKEI2[1])
+
+print('Critical Values: ')
+
+for key, value in JAPAN_NIKKEI2[4].items():
+    print('\t%s: %.3f' %(key,value))
+    
+print('ADF Statistics for Japan EPU: %f' % JAPAN_EPU2[0])
+
+print('P-Value: %f' % JAPAN_EPU2[1])
+
+print('Critical Values: ')
+
+for key,value in JAPAN_EPU2[4].items():
+    print('\t%s: %.3f' %(key, value))
+    
+print('ADF Statistics for Japan CCI: %f' % JAPAN_CCI2[0])
+
+print('P-Value: %f' % JAPAN_CCI2[1])
+
+print('Critical Values: ')
+
+for key,value in JAPAN_CCI2[4].items():
+    print('\t%s: %.3f' %(key, value))
+    
+
+# With the very small P-value, we have now ensured that the series
+# are now stationary.
+# Let us now look at completing the Contemporaneous Regression Analysis.
+
+XJ = read_Japan_new.iloc[:,1:3]
+
+yj= read_Japan_new['Adjusted Closing Prices for Nikkei 225']
+
+estimate_j = sm.OLS(yj, XJ).fit()
+estimate_j.summary()
+
+# It seems that both the variables are significant variables,
+# in a multiple regression setting.
+
+
+for ii in range(XJ.shape[1]):
+
+    plt.scatter(XJ.iloc[:, ii], yj)
+    plt.title("Scatterplot")
+    model_j = sm.OLS(yj, XJ.iloc[:, ii]).fit()
+    slope_j = model_j.params[0]
+    abline_values_j = [slope_j * i for i in XJ.iloc[:, ii]]
+   
+    plt.plot(XJ.iloc[:,ii], abline_values_j, 'b')
+    plt.title('slope')
+    
+    
+    plt.show()    
+
+# From their respective regression graphs we can see that CCI and Stock Exchange
+# has a positive relationship and EPU and Stock Market has a negative relationship.
+# This is constant with our logical inferences.
+
+# Let us check for a one month lag, because if it is not significant in one month
+# It should not be significant otherwise. 
+
+NJ = read_Japan_new.shape[0]
+
+ypj = read_Japan_new.iloc[1:NJ,0]
+
+xpj = read_Japan_new.iloc[0:(NJ-1), 1:3]   
+    
+ypj = np.array(ypj)
+
+xpj = np.array(xpj)
+
+out_japan = sm.OLS(ypj, xpj).fit()
+
+out_japan.summary()
+
+# Not significant, which means that any changes to CCI or EPU will
+# have an immediate impact on the Stock market.
